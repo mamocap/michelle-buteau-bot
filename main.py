@@ -61,7 +61,7 @@ def handle_message(update: Update, context: CallbackContext):
 
     update.message.reply_text(assistant_message)
 
-if __name__ == "__main__":
+def main():
     updater = Updater(TELEGRAM_TOKEN)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
@@ -69,3 +69,6 @@ if __name__ == "__main__":
     print("הבוט רץ! 🚀")
     updater.start_polling()
     updater.idle()
+
+if __name__ == "__main__":
+    main()
