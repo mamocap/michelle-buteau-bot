@@ -1,11 +1,13 @@
 import os
 import logging
+from groq import Groq
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
 logging.basicConfig(level=logging.INFO)
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 SYSTEM_PROMPT = """את המאמנת העסקית של המשתמשת — סטייליסטית ומספרת סיפורים ויזואליים בתחום האופנה.
 
@@ -37,21 +39,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "content": user_message
     })
 
-    # Keep only last 10 messages to save memory
     if len(conversation_history[user_id]) > 10:
         conversation_history[user_id] = conversation_history[user_id][-10:]
 
-    import anthropic
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    client = Groq(api_key=GROQ_API_KEY)
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+    messages_with_system = [{"role": "system", "content": SYSTEM_PROMPT}] + conversation_history[user_id]
+
+    response = client.chat.completions.create(
+        model="llama3-70b-8192",
         max_tokens=500,
-        system=SYSTEM_PROMPT,
-        messages=conversation_history[user_id]
+        messages=messages_with_system
     )
 
-    assistant_message = response.content[0].text
+    assistant_message = response.choices[0].message.content
 
     conversation_history[user_id].append({
         "role": "assistant",
