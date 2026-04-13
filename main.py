@@ -1,8 +1,9 @@
 import os
 import logging
+import asyncio
 from groq import Groq
 from telegram import Update
-from telegram.ext import Updater, MessageHandler, CommandHandler, Filters, CallbackContext
+from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,14 +21,14 @@ SYSTEM_PROMPT = """את המאמנת העסקית של המשתמשת — סטי
 
 conversation_history = {}
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text(
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
         "היי! אני המאמנת העסקית שלך 👗✨\n"
         "אני כאן כדי לעזור לך לבנות עסק מסיפורים ויזואליים באופנה.\n"
         "אז תגידי לי — מה קורה? מה מעכב אותך היום? 😄"
     )
 
-def handle_message(update: Update, context: CallbackContext):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_message = update.message.text
 
@@ -59,16 +60,14 @@ def handle_message(update: Update, context: CallbackContext):
         "content": assistant_message
     })
 
-    update.message.reply_text(assistant_message)
+    await update.message.reply_text(assistant_message)
 
 def main():
-    updater = Updater(TELEGRAM_TOKEN)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    app = Application.builder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("הבוט רץ! 🚀")
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
